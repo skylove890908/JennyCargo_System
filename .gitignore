@@ -13,7 +13,7 @@ venv/
 ENV/
 
 # Databases
-*.db
+# *.db (暫時允許資料庫上傳以供測試)
 
 # OS
 .DS_Store

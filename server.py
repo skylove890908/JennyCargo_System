@@ -13,11 +13,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 自動判定資料庫路徑：優先找當前目錄，找不到再找地端路徑
-if os.path.exists("cargo.db"):
-    db_path = "cargo.db"
-else:
-    db_path = os.path.join(os.path.expanduser("~/Desktop/vibe coding/JennyCargo_System"), "cargo.db")
+# 自動判定資料庫路徑
+current_dir = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(current_dir, "cargo.db")
 
 @app.get("/")
 def health_check():
