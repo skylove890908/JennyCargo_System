@@ -14,7 +14,9 @@ from linebot.v3.messaging import (
     ApiClient,
     MessagingApi,
     ReplyMessageRequest,
-    TextMessage
+    TextMessage,
+    FlexMessage,
+    FlexContainer
 )
 from linebot.v3.webhooks import (
     MessageEvent,
@@ -32,7 +34,6 @@ line_token = os.getenv('LINE_CHANNEL_ACCESS_TOKEN')
 configuration = Configuration(access_token=line_token)
 handler = WebhookHandler(line_secret)
 
-# 允許 React 跨域請求
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -40,7 +41,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 自動判定資料庫路徑
 current_dir = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(current_dir, "cargo.db")
 
@@ -56,6 +56,56 @@ def get_shipment_data(q: str):
         data['history'] = [item.strip() for item in data['history'].split(';')]
         return data
     return None
+
+def create_flex_message(data):
+    # 設計漂亮卡片的 JSON 結構
+    flex_json = {
+      "type": "bubble",
+      "header": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {"type": "text", "text": "📦 貨態查詢結果", "weight": "bold", "color": "#FFFFFF", "size": "sm"},
+          {"type": "text", "text": data['status'], "weight": "bold", "size": "xxl", "margin": "md", "color": "#FFFFFF"}
+        ],
+        "backgroundColor": "#126eb4"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {"type": "box", "layout": "horizontal", "contents": [
+            {"type": "text", "text": "單號", "size": "sm", "color": "#aaaaaa", "flex": 1},
+            {"type": "text", "text": data['tid'], "size": "sm", "color": "#666666", "flex": 2, "align": "end"}
+          ]},
+          {"type": "separator", "margin": "md"},
+          {"type": "box", "layout": "vertical", "margin": "lg", "spacing": "sm", "contents": [
+            {"type": "box", "layout": "horizontal", "contents": [
+              {"type": "text", "text": "目前位置", "size": "sm", "color": "#555555", "flex": 1},
+              {"type": "text", "text": data['location'], "size": "sm", "color": "#111111", "flex": 2, "align": "end", "weight": "bold"}
+            ]},
+            {"type": "box", "layout": "horizontal", "contents": [
+              {"type": "text", "text": "預計抵達", "size": "sm", "color": "#555555", "flex": 1},
+              {"type": "text", "text": data['eta'], "size": "sm", "color": "#111111", "flex": 2, "align": "end", "weight": "bold"}
+            ]}
+          ]},
+          {"type": "box", "layout": "vertical", "margin": "xl", "contents": [
+            {"type": "text", "text": "📍 最新物流軌跡", "size": "xs", "color": "#aaaaaa", "weight": "bold"},
+            {"type": "text", "text": data['history'][-1], "size": "sm", "color": "#126eb4", "margin": "xs", "wrap": True}
+          ]}
+        ]
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "contents": [
+          {"type": "button", "style": "link", "height": "sm", "action": {
+            "type": "uri", "label": "查看詳細軌跡", "uri": f"https://jenny-cargo-system.vercel.app/?q={data['tid']}"
+          }}
+        ]
+      }
+    }
+    return FlexContainer.from_json(json.dumps(flex_json))
 
 @app.get("/")
 def health_check():
@@ -86,20 +136,20 @@ def handle_message(event):
     with ApiClient(configuration) as api_client:
         line_bot_api = MessagingApi(api_client)
         if data:
-            reply_text = f"📦 貨態查詢成功！\n---\n"
-            reply_text += f"狀態：{data['status']}\n"
-            reply_text += f"位置：{data['location']}\n"
-            reply_text += f"預計抵達：{data['eta']}\n"
-            reply_text += f"---\n最新進度：\n{data['history'][-1]}"
-        else:
-            reply_text = "查無此貨件，請重新輸入單號、客戶編號或統編。🤖"
-            
-        line_bot_api.reply_message_with_http_info(
-            ReplyMessageRequest(
-                reply_token=event.reply_token,
-                messages=[TextMessage(text=reply_text)]
+            flex_content = create_flex_message(data)
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[FlexMessage(alt_text="📦 貨態查詢結果", contents=flex_content)]
+                )
             )
-        )
+        else:
+            line_bot_api.reply_message(
+                ReplyMessageRequest(
+                    reply_token=event.reply_token,
+                    messages=[TextMessage(text="查無此貨件，請重新輸入。🤖")]
+                )
+            )
 
 if __name__ == "__main__":
     import uvicorn
