@@ -13,7 +13,9 @@ function App() {
     setResult(null);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/track?q=${query}`);
+      // 使用環境變數或預設的 Render 網址
+      const apiUrl = import.meta.env.VITE_API_URL || 'https://jennycargo-system.onrender.com';
+      const response = await fetch(`${apiUrl}/api/track?q=${query}`);
       if (!response.ok) {
         throw new Error('查無資料，請確認輸入是否正確。');
       }
