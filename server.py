@@ -13,8 +13,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-base_path = os.path.expanduser("~/Desktop/JennyCargo_System")
-db_path = os.path.join(base_path, "cargo.db")
+# 自動判定資料庫路徑：優先找當前目錄，找不到再找地端路徑
+if os.path.exists("cargo.db"):
+    db_path = "cargo.db"
+else:
+    db_path = os.path.join(os.path.expanduser("~/Desktop/vibe coding/JennyCargo_System"), "cargo.db")
+
+@app.get("/")
+def health_check():
+    return {"status": "ok", "db_path": db_path, "db_exists": os.path.exists(db_path)}
 
 @app.get("/api/track")
 def track_shipment(q: str):
