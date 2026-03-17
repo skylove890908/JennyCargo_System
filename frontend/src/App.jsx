@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
 
+const FmsButton = ({ children, variant = 'primary', disabled = false, onClick, className = '' }) => {
+  const baseStyles = "px-6 py-2 rounded-md font-bold transition-all duration-200 active:scale-95 text-sm";
+  const variants = {
+    primary: "bg-[#126eb4] text-white hover:bg-[#423c3b] disabled:bg-[#d3d3d3] disabled:text-gray-500",
+    secondary: "bg-white text-[#126eb4] border border-[#126eb4] hover:bg-gray-50 disabled:border-gray-200 disabled:text-gray-400",
+    danger: "bg-[#c63c2c] text-white hover:bg-[#423c3b] disabled:bg-[#d3d3d3]",
+  };
+  return (
+    <button onClick={onClick} disabled={disabled} className={`${baseStyles} ${variants[variant]} ${className}`}>
+      {children}
+    </button>
+  );
+};
+
 const FmsStandardDemo = () => {
   const [vehicles] = useState([
     { id: 1, license: 'ABC-1234', driver: '林小明', status: '行駛中' },
@@ -7,49 +21,67 @@ const FmsStandardDemo = () => {
   ]);
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold text-gray-800">車輛管理 (FMS 規範範本)</h2>
-        <button className="bg-[#126eb4] text-white px-5 py-2 rounded-lg hover:bg-blue-700 transition shadow-sm font-medium active:scale-95">
-          新增車輛
-        </button>
-      </div>
-
-      <div className="bg-white rounded-2xl shadow-xl shadow-blue-900/5 overflow-hidden border border-gray-100">
-        {vehicles.map((car) => (
-          <div 
-            key={car.id} 
-            className="group relative flex items-center justify-between p-5 border-b last:border-0 hover:bg-blue-50/50 transition cursor-default select-none"
-            onContextMenu={(e) => {
-              e.preventDefault();
-              alert('❌ 規範提醒：此區域已禁用右鍵選單功能');
-            }}
-            onDoubleClick={() => alert('📖 規範提醒：雙擊開啟詳情 (非編輯模式)')}
-          >
-            <div>
-              <p className="font-mono font-bold text-[#126eb4] text-lg">{car.license}</p>
-              <p className="text-sm text-gray-400 font-medium">{car.driver} · {car.status}</p>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
+      {/* 1. 按鈕狀態規範區 */}
+      <section className="space-y-4">
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest ml-1">按鈕狀態規範 (Button States)</h3>
+        <div className="bg-white p-6 rounded-3xl shadow-xl shadow-blue-900/5 space-y-6 border border-gray-50">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <p className="text-[10px] text-gray-400 font-bold">PRIMARY (DEFAULT)</p>
+              <FmsButton variant="primary" className="w-full">主要按鈕</FmsButton>
             </div>
-
-            {/* Hover Actions: 只有在滑鼠移入時才顯示 */}
-            <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-4 transition-all duration-200">
-              <button className="text-gray-500 hover:text-[#126eb4] font-bold text-sm bg-white px-3 py-1.5 rounded-md border border-gray-100 shadow-sm">
-                編輯
-              </button>
-              <button className="text-red-400 hover:text-red-600 font-bold text-sm bg-red-50/50 px-3 py-1.5 rounded-md border border-red-50">
-                刪除
-              </button>
+            <div className="space-y-2">
+              <p className="text-[10px] text-gray-400 font-bold">PRIMARY (DISABLED)</p>
+              <FmsButton variant="primary" disabled className="w-full">禁用按鈕</FmsButton>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[10px] text-gray-400 font-bold">DANGER / ALT</p>
+              <FmsButton variant="danger" className="w-full">刪除類按鈕</FmsButton>
+            </div>
+            <div className="space-y-2">
+              <p className="text-[10px] text-gray-400 font-bold">SECONDARY</p>
+              <FmsButton variant="secondary" className="w-full">次要按鈕</FmsButton>
             </div>
           </div>
-        ))}
-        <div className="bg-yellow-50 p-4 text-[11px] text-yellow-700 leading-relaxed border-t border-yellow-100">
-          📍 **規範測試點**：<br/>
-          1. 滑鼠移至列表行：右側會浮現「編輯/刪除」按鈕。<br/>
-          2. 點擊滑鼠右鍵：會跳出禁用提示。<br/>
-          3. 雙擊滑鼠左鍵：會跳出查看詳情提示。<br/>
-          4. 按鈕外觀：完全不使用任何 Icon 圖示。
+          <div className="bg-blue-50 p-3 rounded-xl text-[11px] text-blue-600 font-medium leading-relaxed">
+            💡 觀測點：請將滑鼠移至「主要按鈕」，背景色會從品牌藍轉為規範要求的 **炭灰色 (#423c3b)**。
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* 2. 列表互動規範區 */}
+      <section className="space-y-4">
+        <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest ml-1">列表互動展示 (Hover Actions)</h3>
+        <div className="bg-white rounded-3xl shadow-xl shadow-blue-900/5 overflow-hidden border border-gray-50">
+          {vehicles.map((car) => (
+            <div 
+              key={car.id} 
+              className="group relative flex items-center justify-between p-5 border-b last:border-0 hover:bg-blue-50/50 transition cursor-default select-none"
+              onContextMenu={(e) => {
+                e.preventDefault();
+                alert('❌ 規範提醒：此區域已禁用右鍵選單功能');
+              }}
+              onDoubleClick={() => alert('📖 規範提醒：雙擊開啟詳情 (非編輯模式)')}
+            >
+              <div>
+                <p className="font-mono font-bold text-[#126eb4] text-lg">{car.license}</p>
+                <p className="text-sm text-gray-400 font-medium">{car.driver} · {car.status}</p>
+              </div>
+
+              {/* Hover Actions */}
+              <div className="opacity-0 group-hover:opacity-100 flex items-center space-x-3 transition-all duration-200">
+                <button className="text-[#126eb4] font-bold text-sm bg-white px-3 py-1.5 rounded-md border border-gray-100 shadow-sm hover:bg-gray-50">
+                  編輯
+                </button>
+                <button className="text-[#c63c2c] font-bold text-sm bg-red-50/50 px-3 py-1.5 rounded-md border border-red-50 hover:bg-red-100">
+                  刪除
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
     </div>
   );
 };
